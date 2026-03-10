@@ -9,9 +9,13 @@ import {
 } from 'fs'
 import { join, dirname } from 'path'
 import { spawn } from 'child_process'
-import type { DownloadOptions, DownloadResult } from './types'
-import { DEFAULT_MIRROR_BASE, DEFAULT_CACHE_DIR } from './types'
-import { getPlatform, getExecutablePath } from './platform'
+import type { DownloadOptions, DownloadResult, SupportedBrowser } from './types'
+import {
+  DEFAULT_MIRROR_BASE,
+  DEFAULT_CACHE_DIR,
+  SUPPORTED_BROWSERS,
+} from './types'
+import { getPlatform, getExecutableCandidates } from './platform'
 import {
   formatSize,
   formatSpeed,
@@ -58,6 +62,15 @@ class Output {
 }
 
 // ============== 内部函数 ==============
+
+function resolveExecutablePath(
+  installDir: string,
+  browser: SupportedBrowser,
+  platform: string,
+): string | undefined {
+  const candidates = getExecutableCandidates(browser, platform)
+  return candidates.map((p) => join(installDir, p)).find((p) => existsSync(p))
+}
 
 /** 获取 stable 版本号 */
 async function getStableVersion(mirrorBase: string): Promise<string> {
@@ -373,18 +386,23 @@ async function extractZip(zipPath: string, destDir: string, out: Output): Promis
 // ============== 主函数 ==============
 
 /**
- * 下载 Chrome for Testing
+ * 下载 Puppeteer 浏览器产物（默认 Chrome）
  *
  * 如果已安装则跳过下载，返回 `alreadyInstalled: true`。
- * 目录结构兼容 Puppeteer 缓存格式：`{cacheDir}/chrome/{platform}-{version}/`
+ * 目录结构兼容 Puppeteer 缓存格式：`{cacheDir}/{browser}/{platform}-{version}/`
  */
 export async function download(options: DownloadOptions = {}): Promise<DownloadResult> {
   const {
     mirrorBase = DEFAULT_MIRROR_BASE,
     cacheDir = DEFAULT_CACHE_DIR,
+    browser = 'chrome',
     version: requestedVersion,
     silent = false,
   } = options
+
+  if (!SUPPORTED_BROWSERS.includes(browser)) {
+    throw new Error(`不支持的浏览器: ${browser}`)
+  }
 
   const out = new Output(silent)
   const { colors } = out
@@ -392,13 +410,14 @@ export async function download(options: DownloadOptions = {}): Promise<DownloadR
   if (!silent) {
     console.log()
     console.log(
-      `${colors.bright}${colors.cyan}  ${ICONS.chrome} Chrome for Testing Downloader${colors.reset}`,
+      `${colors.bright}${colors.cyan}  ${ICONS.chrome} Puppeteer Browser Downloader${colors.reset}`,
     )
     out.divider()
   }
 
   // 平台检测
   const platform = getPlatform()
+  out.log(ICONS.info, `浏览器: ${colors.bright}${browser}${colors.reset}`)
   out.log(ICONS.info, `平台: ${colors.bright}${platform}${colors.reset}`)
 
   // 获取版本
@@ -409,14 +428,14 @@ export async function download(options: DownloadOptions = {}): Promise<DownloadR
   out.log(ICONS.check, `稳定版本: ${colors.bright}${colors.green}${version}${colors.reset}`)
 
   // 计算路径（兼容 Puppeteer 缓存结构）
-  const installDir = join(cacheDir, 'chrome', `${platform}-${version}`)
-  const executablePath = join(installDir, getExecutablePath(platform))
+  const installDir = join(cacheDir, browser, `${platform}-${version}`)
+  const executablePath = resolveExecutablePath(installDir, browser, platform)
 
   // 检查是否已安装
-  if (existsSync(executablePath)) {
+  if (executablePath) {
     if (!silent) {
       console.log()
-      out.log(ICONS.check, 'Chrome 已安装', colors.green)
+      out.log(ICONS.check, `${browser} 已安装`, colors.green)
       out.log(ICONS.folder, `${colors.dim}${executablePath}${colors.reset}`)
       console.log()
     }
@@ -424,7 +443,7 @@ export async function download(options: DownloadOptions = {}): Promise<DownloadR
   }
 
   // 构建下载 URL
-  const zipFileName = `chrome-${platform}.zip`
+  const zipFileName = `${browser}-${platform}.zip`
   const downloadUrl = `${mirrorBase}/${version}/${platform}/${zipFileName}`
 
   // 临时目录
@@ -437,7 +456,7 @@ export async function download(options: DownloadOptions = {}): Promise<DownloadR
     }
 
     // 下载
-    out.title(`${ICONS.download} 下载 Chrome`)
+    out.title(`${ICONS.download} 下载 ${browser}`)
     out.log(ICONS.info, `${colors.dim}${downloadUrl}${colors.reset}`)
     await downloadFile(downloadUrl, zipPath, out)
 
@@ -447,25 +466,31 @@ export async function download(options: DownloadOptions = {}): Promise<DownloadR
     await extractZip(zipPath, installDir, out)
 
     // 验证
-    if (!existsSync(executablePath)) {
-      throw new Error(`Chrome 可执行文件不存在: ${executablePath}`)
+    const installedExecutablePath = resolveExecutablePath(installDir, browser, platform)
+    if (!installedExecutablePath) {
+      throw new Error(`${browser} 可执行文件不存在: ${installDir}`)
     }
 
     // Linux/macOS 添加执行权限
     if (process.platform !== 'win32') {
-      chmodSync(executablePath, 0o755)
+      chmodSync(installedExecutablePath, 0o755)
     }
 
     // 完成
     if (!silent) {
       console.log()
       out.divider()
-      out.log(ICONS.success, `${colors.bright}${colors.green}Chrome 安装成功！${colors.reset}`)
-      out.log(ICONS.folder, `${colors.dim}${executablePath}${colors.reset}`)
+      out.log(ICONS.success, `${colors.bright}${colors.green}${browser} 安装成功！${colors.reset}`)
+      out.log(ICONS.folder, `${colors.dim}${installedExecutablePath}${colors.reset}`)
       console.log()
     }
 
-    return { executablePath, version, platform, alreadyInstalled: false }
+    return {
+      executablePath: installedExecutablePath,
+      version,
+      platform,
+      alreadyInstalled: false,
+    }
   } finally {
     // 清理临时文件
     if (existsSync(tempDir)) {

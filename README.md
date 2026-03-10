@@ -26,6 +26,9 @@ npx puppeteer-downloader
 # 指定缓存目录
 npx puppeteer-downloader --cache-dir ./browsers
 
+# 指定浏览器（默认 chrome）
+npx puppeteer-downloader --browser firefox
+
 # 指定版本
 npx puppeteer-downloader --version 131.0.6778.85
 
@@ -42,9 +45,12 @@ npx puppeteer-downloader --mirror-base https://your-mirror.com/chrome-for-testin
 | --------------------- | -------------------------- | ---------------- |
 | `--mirror-base <url>` | 镜像源 base URL            | npmmirror CDN    |
 | `--cache-dir <dir>`   | 浏览器缓存目录             | ~/.cache/puppeteer |
-| `--version <ver>`     | 指定 Chrome 版本           | 最新稳定版       |
+| `--browser <name>`    | 浏览器类型                 | chrome           |
+| `--version <ver>`     | 指定浏览器版本             | 最新稳定版       |
 | `--silent`            | 静默模式，仅输出可执行路径 | false            |
 | `-h, --help`          | 显示帮助信息               |                  |
+
+支持的 `browser`：`chrome`、`chrome-headless-shell`、`chromedriver`、`firefox`。
 
 ## 编程使用
 
@@ -60,6 +66,7 @@ console.log(result.alreadyInstalled) // 是否已安装（跳过下载）
 // 自定义配置
 const result = await download({
   cacheDir: './browsers',
+  browser: 'firefox',
   version: '131.0.6778.85',
   silent: true,
 })
@@ -73,7 +80,8 @@ const result = await download({
 | ------------ | -------- | ----------------------- | -------------------------------------------------------------- |
 | `mirrorBase` | `string` | 镜像源 base URL         | `https://cdn.npmmirror.com/binaries/chrome-for-testing`        |
 | `cacheDir`   | `string` | 浏览器缓存目录          | `~/.cache/puppeteer`                                           |
-| `version`    | `string` | 指定 Chrome 版本        | 自动获取最新稳定版                                             |
+| `browser`    | `'chrome' \| 'chrome-headless-shell' \| 'chromedriver' \| 'firefox'` | 浏览器类型 | `chrome` |
+| `version`    | `string` | 指定浏览器版本          | 自动获取最新稳定版                                             |
 | `silent`     | `boolean`| 静默模式                | `false`                                                        |
 
 #### `DownloadResult`
