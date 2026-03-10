@@ -1,0 +1,59 @@
+{
+  "name": "puppeteer-downloader",
+  "version": "0.1.0",
+  "description": "Download Chrome for Testing from mirror (npmmirror by default) for Puppeteer",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "puppeteer-downloader": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "puppeteer",
+    "chrome",
+    "chromium",
+    "download",
+    "mirror",
+    "npmmirror",
+    "chrome-for-testing"
+  ],
+  "author": "TomyJan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TomyJan/puppeteer-downloader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TomyJan/puppeteer-downloader/issues"
+  },
+  "homepage": "https://github.com/TomyJan/puppeteer-downloader#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.4.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  }
+}
