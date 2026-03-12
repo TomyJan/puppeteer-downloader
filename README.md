@@ -8,6 +8,7 @@
 - 📦 目录结构兼容 Puppeteer 缓存格式（`~/.cache/puppeteer`）
 - 🎨 TTY 环境下显示实时进度条，非 TTY 环境按百分比输出
 - ⚡ 自动检测已安装版本，跳过重复下载
+- 🧹 支持自动清理旧版本，释放磁盘空间
 - 🔧 支持 CLI 和编程两种使用方式
 - 🌍 跨平台支持 Windows / macOS / Linux
 
@@ -32,6 +33,9 @@ npx puppeteer-downloader --browser firefox
 # 指定版本
 npx puppeteer-downloader --version 131.0.6778.85
 
+# 下载完成后删除旧版本
+npx puppeteer-downloader --delete-old-versions
+
 # 静默模式（仅输出可执行文件路径）
 npx puppeteer-downloader --silent
 
@@ -47,6 +51,7 @@ npx puppeteer-downloader --mirror-base https://your-mirror.com/chrome-for-testin
 | `--cache-dir <dir>`   | 浏览器缓存目录             | ~/.cache/puppeteer |
 | `--browser <name>`    | 浏览器类型                 | chrome           |
 | `--version <ver>`     | 指定浏览器版本             | 最新稳定版       |
+| `--delete-old-versions` | 下载后删除同浏览器的旧版本 | false            |
 | `--silent`            | 静默模式，仅输出可执行路径 | false            |
 | `-h, --help`          | 显示帮助信息               |                  |
 
@@ -69,6 +74,7 @@ const result = await download({
   browser: 'firefox',
   version: '131.0.6778.85',
   silent: true,
+  deleteOldVersions: true, // 自动清理旧版本
 })
 ```
 
@@ -83,6 +89,7 @@ const result = await download({
 | `browser`    | `'chrome' \| 'chrome-headless-shell' \| 'chromedriver' \| 'firefox'` | 浏览器类型 | `chrome` |
 | `version`    | `string` | 指定浏览器版本          | 自动获取最新稳定版                                             |
 | `silent`     | `boolean`| 静默模式                | `false`                                                        |
+| `deleteOldVersions` | `boolean` | 下载后删除同浏览器的旧版本 | `false`                                                   |
 
 #### `DownloadResult`
 
