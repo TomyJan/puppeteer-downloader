@@ -24,6 +24,8 @@ export interface DownloadOptions {
   version?: string
   /** 静默模式，不输出任何日志，默认 false */
   silent?: boolean
+  /** 下载完成后删除同浏览器的旧版本目录，默认 false */
+  deleteOldVersions?: boolean
 }
 
 export interface DownloadResult {

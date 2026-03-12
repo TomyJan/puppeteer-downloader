@@ -16,6 +16,7 @@ Options:
   --cache-dir <dir>     浏览器缓存目录 (默认: ~/.cache/puppeteer)
   --browser <name>      浏览器类型 (默认: chrome)
   --version <ver>       指定浏览器版本 (默认: 最新稳定版)
+  --delete-old-versions 下载完成后删除同浏览器的旧版本
   --silent              静默模式，仅输出可执行文件路径
   -h, --help            显示帮助信息
 
@@ -36,6 +37,8 @@ function parseArgs(args: string[]): Record<string, string | boolean> {
       result.help = true
     } else if (arg === '--silent' || arg === '-s') {
       result.silent = true
+    } else if (arg === '--delete-old-versions') {
+      result.deleteOldVersions = true
     } else if (arg === '--mirror-base' && i + 1 < args.length) {
       result.mirrorBase = args[++i]
     } else if (arg === '--cache-dir' && i + 1 < args.length) {
@@ -71,6 +74,7 @@ download({
   browser: browserArg,
   version: typeof args.version === 'string' ? args.version : undefined,
   silent: args.silent === true,
+  deleteOldVersions: args.deleteOldVersions === true,
 })
   .then((result) => {
     if (args.silent) {

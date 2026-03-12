@@ -383,6 +383,57 @@ async function extractZip(zipPath: string, destDir: string, out: Output): Promis
   })
 }
 
+// ============== 清理旧版本 ==============
+
+/** 删除同浏览器同平台的旧版本目录 */
+function cleanOldVersions(
+  cacheDir: string,
+  browser: SupportedBrowser,
+  platform: string,
+  currentVersion: string,
+  out: Output,
+): void {
+  const browserDir = join(cacheDir, browser)
+  if (!existsSync(browserDir)) return
+
+  const { colors } = out
+  const prefix = `${platform}-`
+  const currentDirName = `${platform}-${currentVersion}`
+
+  let names: string[]
+  try {
+    names = readdirSync(browserDir)
+  } catch {
+    return
+  }
+
+  const oldDirs = names.filter(
+    (name) =>
+      name.startsWith(prefix) &&
+      name !== currentDirName &&
+      statSync(join(browserDir, name)).isDirectory(),
+  )
+
+  if (oldDirs.length === 0) return
+
+  out.log(ICONS.info, `发现 ${oldDirs.length} 个旧版本，正在清理...`)
+
+  for (const name of oldDirs) {
+    const dirPath = join(browserDir, name)
+    const oldVersion = name.slice(prefix.length)
+    try {
+      const dirSize = getDirSize(dirPath)
+      rmSync(dirPath, { recursive: true, force: true })
+      out.log(
+        ICONS.check,
+        `${colors.dim}已删除 ${oldVersion} (${formatSize(dirSize)})${colors.reset}`,
+      )
+    } catch {
+      out.log(ICONS.warning, `${colors.yellow}删除失败: ${dirPath}${colors.reset}`)
+    }
+  }
+}
+
 // ============== 主函数 ==============
 
 /**
@@ -398,6 +449,7 @@ export async function download(options: DownloadOptions = {}): Promise<DownloadR
     browser = 'chrome',
     version: requestedVersion,
     silent = false,
+    deleteOldVersions = false,
   } = options
 
   if (!SUPPORTED_BROWSERS.includes(browser)) {
@@ -438,6 +490,9 @@ export async function download(options: DownloadOptions = {}): Promise<DownloadR
       out.log(ICONS.check, `${browser} 已安装`, colors.green)
       out.log(ICONS.folder, `${colors.dim}${executablePath}${colors.reset}`)
       console.log()
+    }
+    if (deleteOldVersions) {
+      cleanOldVersions(cacheDir, browser, platform, version, out)
     }
     return { executablePath, version, platform, alreadyInstalled: true }
   }
@@ -483,6 +538,10 @@ export async function download(options: DownloadOptions = {}): Promise<DownloadR
       out.log(ICONS.success, `${colors.bright}${colors.green}${browser} 安装成功！${colors.reset}`)
       out.log(ICONS.folder, `${colors.dim}${installedExecutablePath}${colors.reset}`)
       console.log()
+    }
+
+    if (deleteOldVersions) {
+      cleanOldVersions(cacheDir, browser, platform, version, out)
     }
 
     return {
