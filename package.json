@@ -1,6 +1,6 @@
 {
   "name": "puppeteer-downloader",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Download Chrome for Testing from mirror (npmmirror by default) for Puppeteer",
   "type": "module",
   "exports": {
